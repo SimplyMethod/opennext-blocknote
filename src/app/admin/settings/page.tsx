@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, Resolver } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +50,7 @@ export default function SettingsPage() {
   });
 
   const notificationForm = useForm<NotificationFormValues>({
-    resolver: zodResolver(notificationFormSchema) as any,
+    resolver: zodResolver(notificationFormSchema) as Resolver<NotificationFormValues>,
     defaultValues: defaultNotificationValues,
   });
 
@@ -153,7 +153,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <Form {...notificationForm}>
-                <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit as any)} className="space-y-8">
+                <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit)} className="space-y-8">
                   <FormField
                     control={notificationForm.control}
                     name="emailNotifications"
