@@ -19,7 +19,7 @@
     {
       "binding": "DB",
       "database_name": "OPENNEXT_BLOCKNOTE",
-      "database_id": "YOUR_DB_ID",
+      "database_id": "97eb2c8b-951e-4f8a-9fdf-cc82628b902c",
       "migrations_dir": "drizzle/migrations"
     }
   ]
