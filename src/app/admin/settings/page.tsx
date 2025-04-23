@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -37,7 +37,7 @@ const defaultGeneralValues: Partial<GeneralFormValues> = {
   siteUrl: "https://example.com",
 };
 
-const defaultNotificationValues: Partial<NotificationFormValues> = {
+const defaultNotificationValues: NotificationFormValues = {
   emailNotifications: true,
   newPostNotifications: true,
   marketingEmails: false,
@@ -50,7 +50,7 @@ export default function SettingsPage() {
   });
 
   const notificationForm = useForm<NotificationFormValues>({
-    resolver: zodResolver(notificationFormSchema),
+    resolver: zodResolver(notificationFormSchema) as any,
     defaultValues: defaultNotificationValues,
   });
 
@@ -153,7 +153,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <Form {...notificationForm}>
-                <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit)} className="space-y-8">
+                <form onSubmit={notificationForm.handleSubmit(onNotificationSubmit as any)} className="space-y-8">
                   <FormField
                     control={notificationForm.control}
                     name="emailNotifications"
