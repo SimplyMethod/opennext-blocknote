@@ -42,7 +42,7 @@ export default function PostsPage() {
   useEffect(() => {
     async function fetchPosts() {
       try {
-        const response = await fetch('/api/posts');
+        const response = await fetch('/admin/api/posts');
         
         if (!response.ok) {
           throw new Error('Failed to fetch posts');
@@ -65,7 +65,7 @@ export default function PostsPage() {
     setIsDeleting(true);
     
     try {
-      const response = await fetch(`/api/posts/${id}`, {
+      const response = await fetch(`/admin/api/posts/${id}`, {
         method: 'DELETE',
       });
       

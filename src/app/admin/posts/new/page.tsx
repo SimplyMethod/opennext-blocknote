@@ -53,7 +53,7 @@ export default function NewPostPage() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/posts', {
+      const response = await fetch('/admin/api/posts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

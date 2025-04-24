@@ -64,7 +64,7 @@ export default function EditPostPage() {
   useEffect(() => {
     async function fetchPost() {
       try {
-        const response = await fetch(`/api/posts/${postId}`);
+        const response = await fetch(`/admin/api/posts/${postId}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch post');
@@ -101,7 +101,7 @@ export default function EditPostPage() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`/api/posts/${postId}`, {
+      const response = await fetch(`/admin/api/posts/${postId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
