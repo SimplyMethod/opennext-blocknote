@@ -6,6 +6,7 @@ import { Dispatch, SetStateAction } from 'react';
 // Use a type for the component props
 interface EditorProps {
   onChange?: Dispatch<SetStateAction<string>>;
+  initialContent?: string;
 }
 
 // Export the dynamic component with the proper type
