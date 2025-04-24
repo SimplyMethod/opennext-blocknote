@@ -1,26 +1,96 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit, Eye, Plus, Trash } from "lucide-react";
-import { getDb } from "@/lib/db";
-import { posts } from "@/drizzle/schema";
-import { desc } from "drizzle-orm";
-import { format } from "date-fns";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-export default async function PostsPage() {
-  // Fetch posts from database
-  const db = await getDb();
-  const allPosts = await db.select().from(posts).orderBy(desc(posts.createdAt));
-  
-  // Format posts for display
-  const formattedPosts = allPosts.map(post => ({
-    id: post.id,
-    title: post.title,
-    status: "Published", // This would be dynamic in a real app with a status field
-    date: format(new Date(Number(post.createdAt) * 1000), "yyyy-MM-dd"),
-    views: 0, // This would come from a views table in a real app
-  }));
+type Post = {
+  id: string;
+  title: string;
+  slug: string;
+  status: string;
+  date: string;
+  views: number;
+};
+
+interface PostsApiResponse {
+  posts: Post[];
+}
+
+export default function PostsPage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Load post data
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        const response = await fetch('/api/posts');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch posts');
+        }
+        
+        const data = await response.json() as PostsApiResponse;
+        setPosts(data.posts || []);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        toast.error('Failed to load posts');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchPosts();
+  }, []);
+
+  async function deletePost(id: string) {
+    setIsDeleting(true);
+    
+    try {
+      const response = await fetch(`/api/posts/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete post');
+      }
+      
+      setPosts(posts.filter(post => post.id !== id));
+      toast.success('Post deleted successfully');
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast.error('Failed to delete post');
+    } finally {
+      setIsDeleting(false);
+      setSelectedPostId(null);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -58,14 +128,14 @@ export default async function PostsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {formattedPosts.length === 0 ? (
+              {posts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     No posts found. Click &quot;New Post&quot; to create your first post.
                   </TableCell>
                 </TableRow>
               ) : (
-                formattedPosts.map((post) => (
+                posts.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell className="font-medium">{post.title}</TableCell>
                     <TableCell>
@@ -81,7 +151,7 @@ export default async function PostsPage() {
                     <TableCell className="text-right">{post.views}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Link href={`/posts/${post.id}`}>
+                        <Link href={`/posts/${post.slug}`}>
                           <Button variant="ghost" size="icon">
                             <Eye className="h-4 w-4" />
                             <span className="sr-only">View</span>
@@ -93,10 +163,37 @@ export default async function PostsPage() {
                             <span className="sr-only">Edit</span>
                           </Button>
                         </Link>
-                        <Button variant="ghost" size="icon">
-                          <Trash className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setSelectedPostId(post.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the post 
+                                &quot;{post.title}&quot; and remove it from our servers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deletePost(post.id)}
+                                disabled={isDeleting}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                {isDeleting && selectedPostId === post.id ? "Deleting..." : "Delete"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>

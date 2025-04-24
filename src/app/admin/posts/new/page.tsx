@@ -12,6 +12,7 @@ import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 
 // Dynamically import the BlockNote editor to avoid server-side rendering issues
 const DynamicEditor = dynamic(() => import("@/components/DynamicEditor"), {
@@ -31,6 +32,8 @@ const formSchema = z.object({
 
 export default function NewPostPage() {
   const [editorContent, setEditorContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,13 +44,40 @@ export default function NewPostPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log({
-      ...values,
-      content: editorContent,
-    });
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!editorContent) {
+      toast.error("Post content cannot be empty");
+      return;
+    }
+
+    setIsSubmitting(true);
     
-    toast.success("Post created successfully!");
+    try {
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...values,
+          content: editorContent,
+        }),
+      });
+      
+      const data = await response.json() as { id: string; error?: string };
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create post');
+      }
+      
+      toast.success("Post created successfully!");
+      router.push('/admin/posts');
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create post');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -61,9 +91,21 @@ export default function NewPostPage() {
           </Link>
           <h1 className="text-3xl font-bold tracking-tight">Create New Post</h1>
         </div>
-        <Button onClick={form.handleSubmit(onSubmit)}>
-          <Save className="mr-2 h-4 w-4" />
-          Save Post
+        <Button 
+          onClick={form.handleSubmit(onSubmit)} 
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <span className="mr-2 h-4 w-4 animate-spin">⏳</span>
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Post
+            </>
+          )}
         </Button>
       </div>
 
@@ -145,8 +187,13 @@ export default function NewPostPage() {
               </Form>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline">Save as Draft</Button>
-              <Button onClick={form.handleSubmit(onSubmit)}>Publish</Button>
+              <Button variant="outline" disabled={isSubmitting}>Save as Draft</Button>
+              <Button 
+                onClick={form.handleSubmit(onSubmit)} 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Saving..." : "Publish"}
+              </Button>
             </CardFooter>
           </Card>
         </div>
