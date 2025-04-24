@@ -1,5 +1,10 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core"
 import { sql } from "drizzle-orm"
+import { user, session, account, verification } from "./auth-schema";
+
+export const schema = { user, session, account, verification };
+
+export { user, session, account, verification };
 
 // posts table
 export const posts = sqliteTable(
